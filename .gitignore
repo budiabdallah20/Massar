@@ -1,0 +1,30 @@
+# Config (contains API keys)
+config.js
+
+# Environment
+.env
+.env.local
+
+# Node
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build artifacts
+dist/
+build/
+*.apk
+*.aab
+android/
+ios/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log

@@ -1,0 +1,108 @@
+{
+  "name": "مسار — Masar",
+  "short_name": "مسار",
+  "description": "تطبيقك الشخصي لإدارة الوقت والمهام والصحة والذكريات — Masar v10",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#0a0a0a",
+  "theme_color": "#f97316",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["productivity", "lifestyle", "education"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "مهمة جديدة",
+      "short_name": "مهمة",
+      "description": "أضف مهمة جديدة بسرعة",
+      "url": "./index.html?action=new-task",
+      "icons": [{ "src": "logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "البومودورو",
+      "short_name": "تركيز",
+      "description": "ابدأ جلسة تركيز",
+      "url": "./index.html?action=pomodoro",
+      "icons": [{ "src": "logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "تحدث مع فوفا",
+      "short_name": "فوفا",
+      "description": "مساعدتك الذكية",
+      "url": "./index.html?action=fofa",
+      "icons": [{ "src": "logo.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "1.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "الشاشة الرئيسية"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "auto"
+  }
+}

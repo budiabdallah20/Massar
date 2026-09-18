@@ -1,0 +1,10 @@
+{
+  "name": "Masar",
+  "packageId": "com.mohamedabdallah.masar",
+  "version": "1.0.0",
+  "entry": "masar.html",
+  "orientation": "portrait",
+  "permissions": ["INTERNET", "ACCESS_NETWORK_STATE", "RECORD_AUDIO", "VIBRATE", "POST_NOTIFICATIONS"],
+  "icon": "./logo.png",
+  "splashScreen": { "backgroundColor": "#0a0a0a" }
+}

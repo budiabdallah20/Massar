@@ -1,0 +1,13 @@
+{
+  "name": "my-nitron-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nitron build",
+    "dev": "nitron dev"
+  },
+  "dependencies": {
+    "nitron": "latest"
+  }
+}

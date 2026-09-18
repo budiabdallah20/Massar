@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="مسار">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="مَسَار  — مساعدك الشخصي الذكي">
+<title>مَسَار — MAASAR </title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="manifest" href="manifest.json">
+
+<!-- ═══ Libraries ═══ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Amiri:wght@400;700&family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+<link rel="stylesheet" href="style.css">
+
+<!-- ═══ Inline critical CSS (for canvas/layers) ═══ -->
+<style>
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;pointer-events:none;opacity:.6}
+#particlesLayer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+#cursorGlow{position:fixed;width:400px;height:400px;border-radius:50%;pointer-events:none;z-index:0;background:radial-gradient(circle,rgba(249,115,22,.15),transparent 70%);transition:transform .2s;transform:translate(-50%,-50%);display:none}
+body.using-mouse #cursorGlow{display:block}
+.skeleton{background:linear-gradient(90deg,var(--card) 25%,var(--card-2) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmerSk 1.5s infinite}
+@keyframes shimmerSk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body>
+
+<!-- ═══ BACKGROUND LAYERS ═══ -->
+<canvas id="bgCanvas"></canvas>
+<div id="particlesLayer"></div>
+<div id="cursorGlow"></div>
+
+<!-- ═══ LOADING SCREEN ═══ -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loader-logo">
+    <img src="logo.png" alt="مسار" onerror="this.style.display='none'; this.parentElement.textContent='م';">
+  </div>
+  <div class="loader-title">مَسَار</div>
+  <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
+  <div class="loader-text" id="loaderText">جاري التحميل...</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TOP NAV
+     ═══════════════════════════════════════════ -->
+<nav class="top-nav" id="topNav">
+  <div class="nav-inner">
+   <div class="brand">
+  <div class="brand-logo">
+    <img src="logo.png" alt="مسار" onerror="this.style.display='none'; this.parentElement.textContent='م';">
+  </div>
+  <div class="brand-text">
+    <h1>مَسَار</h1>
+    <p class="ltr">MAASAR </p>
+  </div>
+</div>
+    <div class="nav-quick">
+      <button class="icon-btn" id="searchBtn" title="بحث"><i class="fa-solid fa-magnifying-glass"></i></button>
+      <button class="icon-btn" id="themeToggle" title="الثيم"><i class="fa-solid fa-moon"></i></button>
+      <button class="icon-btn" id="focusToggle" title="وضع التركيز"><i class="fa-solid fa-bullseye"></i></button>
+      <button class="icon-btn" id="breathBtn" title="تنفس"><i class="fa-solid fa-wind"></i></button>
+      <div class="nav-clock">
+        <div class="clock-time ltr" id="liveClock">--:--:--</div>
+        <div class="clock-date" id="liveDate">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- XP Bar -->
+  <div class="xp-bar-wrap" id="xpBarWrap">
+    <div class="xp-level" id="xpLevel">Lv.1</div>
+    <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+    <div class="xp-coins"><i class="fa-solid fa-coins"></i> <span id="coinsCount">0</span></div>
+  </div>
+
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-tab="home"><i class="fa-solid fa-house"></i><span>الرئيسية<small class="en-mini">Home</small></span></button>
+    <button class="nav-tab" data-tab="dashboard"><i class="fa-solid fa-chart-line"></i><span>تحليلات<small class="en-mini">Stats</small></span></button>
+    <button class="nav-tab" data-tab="appointments"><i class="fa-solid fa-calendar-days"></i><span>المواعيد<small class="en-mini">Calendar</small></span></button>
+    <button class="nav-tab" data-tab="tasks"><i class="fa-solid fa-list-check"></i><span>المهمات<small class="en-mini">Tasks</small></span></button>
+    <button class="nav-tab" data-tab="lectures"><i class="fa-solid fa-graduation-cap"></i><span>المحاضرات<small class="en-mini">Lectures</small></span></button>
+    <button class="nav-tab" data-tab="study"><i class="fa-solid fa-book-open"></i><span>دراسة<small class="en-mini">Study</small></span></button>
+    <button class="nav-tab" data-tab="wellness"><i class="fa-solid fa-spa"></i><span>صحة<small class="en-mini">Wellness</small></span></button>
+    <button class="nav-tab" data-tab="memories"><i class="fa-solid fa-heart"></i><span>ذكريات<small class="en-mini">Memories</small></span></button>
+    <button class="nav-tab" data-tab="map"><i class="fa-solid fa-map"></i><span>خريطة<small class="en-mini">Map</small></span></button>
+    <button class="nav-tab" data-tab="fofa"><i class="fa-solid fa-robot"></i><span>فوفا<small class="en-mini">Fofa</small></span></button>
+    <button class="nav-tab" data-tab="achievements"><i class="fa-solid fa-trophy"></i><span>إنجازات<small class="en-mini">Awards</small></span></button>
+    <button class="nav-tab" data-tab="notes"><i class="fa-solid fa-pen-fancy"></i><span>ملاحظات<small class="en-mini">Notes</small></span></button>
+    <button class="nav-tab" data-tab="tools"><i class="fa-solid fa-toolbox"></i><span>أدوات<small class="en-mini">Tools</small></span></button>
+    <button class="nav-tab" data-tab="settings"><i class="fa-solid fa-gear"></i><span>إعدادات<small class="en-mini">Settings</small></span></button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     TAB: HOME
+     ═══════════════════════════════════════════ -->
+<main class="tab-content active" id="tab-home">
+
+  <!-- 🆕 Feature #17: Hero Section with 3D -->
+  <section class="hero-section" id="heroSection">
+    <div class="hero-greeting" id="heroGreeting">صباح الخير يا بطل ☀️</div>
+    <div class="hero-name">محمد عبد الله</div>
+    <div class="hero-sub" id="heroSub">جاهز لإنجاز حاجة عظيمة النهاردة؟</div>
+    <div class="hero-quick-actions">
+      <button class="hero-quick-btn" onclick="switchTab('tasks')"><i class="fa-solid fa-plus"></i> مهمة</button>
+      <button class="hero-quick-btn" onclick="switchTab('study')"><i class="fa-solid fa-stopwatch"></i> بومودورو</button>
+      <button class="hero-quick-btn" onclick="fofaQuick('قولي حكمة')"><i class="fa-solid fa-comment-dots"></i> فوفا</button>
+    </div>
+  </section>
+
+  <!-- 🆕 Feature #5: Daily Affirmation -->
+  <div class="affirmation-card" id="affirmationCard" data-aos="fade-up">
+    <i class="fa-solid fa-quote-right"></i>
+    <div class="affirmation-text" id="affirmationText">أنا قادر أوصل لأي حاجة أحطها في دماغي ✨</div>
+    <button class="affirmation-btn" onclick="newAffirmation()"><i class="fa-solid fa-rotate"></i></button>
+  </div>
+
+  <!-- Verse -->
+  <div class="verse-card" data-aos="fade-up">
+    <button class="refresh-btn" onclick="refreshVerse()"><i class="fa-solid fa-rotate"></i></button>
+    <div class="verse-text" id="verseText">﴿ وَقُل رَّبِّ زِدْنِي عِلْمًا ﴾</div>
+    <div class="verse-ref" id="verseRef">سورة طه · ١١٤</div>
+    <div class="wisdom" id="wisdomText">«الوقتُ كالسيفِ إن لم تقطعهُ قطعك»</div>
+  </div>
+
+  <!-- Daily Tip -->
+  <div class="daily-tip" data-aos="fade-up">
+    <i class="fa-solid fa-lightbulb"></i>
+    <div>
+      <div class="tip-title">💡 نصيحة اليوم</div>
+      <div class="tip-text" id="tipText">—</div>
+    </div>
+  </div>
+
+  <!-- 🆕 Feature #12: Daily Challenge -->
+  <div class="challenge-card" id="challengeCard" data-aos="zoom-in">
+    <div class="challenge-badge">🎯 تحدي اليوم</div>
+    <div class="challenge-text" id="challengeText">—</div>
+    <div class="challenge-reward">
+      <i class="fa-solid fa-coins"></i> +<span id="challengeReward">50</span> عملة
+    </div>
+    <button class="challenge-btn" id="challengeBtn" onclick="completeChallenge()">
+      <i class="fa-solid fa-check"></i> خلصته
+    </button>
+  </div>
+
+  <!-- Prayer Tracker -->
+  <div class="section-head" data-aos="fade-right">
+    <div class="section-title">🕌 متتبع الصلاة</div>
+    <span class="section-counter" id="prayerCountHome">0/5</span>
+  </div>
+  <div class="card" data-aos="fade-up">
+    <div class="prayer-grid" id="prayerCheckGrid"></div>
+    <div class="prayer-alert" id="prayerAlert" style="display:none">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <div>
+        <div style="font-weight:800">⚠️ لم تصلِّ بعد!</div>
+        <div style="font-size:2.8mm;opacity:.9" id="prayerAlertText">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tasbeeh -->
+  <div class="section-head" data-aos="fade-right">
+    <div class="section-title">📿 عداد التسبيح</div>
+    <button class="section-action" onclick="resetTasbeeh()"><i class="fa-solid fa-rotate-left"></i> إعادة</button>
+  </div>
+  <div class="tasbeeh-card" data-aos="fade-up">
+    <div class="tasbeeh-glow"></div>
+    <div class="tasbeeh-dhikr" id="tasbeehDhikr">سُبْحَانَ اللَّهِ</div>
+    <div class="tasbeeh-counter" id="tasbeehCounter">0</div>
+    <div class="tasbeeh-target" id="tasbeehTarget">الهدف: 33</div>
+    <button class="tasbeeh-btn" id="tasbeehBtn"><i class="fa-solid fa-hand-point-up"></i><span>اضغط للتسبيح</span></button>
+    <div class="tasbeeh-chips" id="tasbeehChips">
+      <button class="tasbeeh-chip active" data-dhikr="سُبْحَانَ اللَّهِ" data-target="33">سبحان الله · 33</button>
+      <button class="tasbeeh-chip" data-dhikr="الْحَمْدُ لِلَّهِ" data-target="33">الحمد لله · 33</button>
+      <button class="tasbeeh-chip" data-dhikr="اللَّهُ أَكْبَرُ" data-target="34">الله أكبر · 34</button>
+      <button class="tasbeeh-chip" data-dhikr="لَا إِلَهَ إِلَّا اللَّهُ" data-target="100">لا إله إلا الله · 100</button>
+      <button class="tasbeeh-chip" data-dhikr="أَسْتَغْفِرُ اللَّهَ" data-target="100">أستغفر الله · 100</button>
+    </div>
+    <div class="tasbeeh-total">إجمالي: <span id="tasbeehTotalToday">0</span></div>
+  </div>
+
+  <!-- Weekly Progress -->
+  <div class="card weekly-progress" data-aos="fade-up">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2.5mm">
+      <div style="font-size:3.4mm;font-weight:800"><i class="fa-solid fa-chart-simple" style="color:var(--accent)"></i> تقدم الأسبوع</div>
+      <div class="ltr" style="font-size:3.4mm;font-weight:800;color:var(--accent-light)" id="weeklyPercent">0%</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="weeklyBar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:2mm;font-size:2.6mm;color:var(--muted);font-weight:700">
+      <span id="weeklyDone">0 مهام</span>
+      <span id="weeklyTotal">من 0</span>
+    </div>
+  </div>
+
+  <!-- 🆕 Feature #1: Stats Cards Home -->
+  <div class="stat-mini-grid" data-aos="fade-up">
+    <div class="stat-mini"><div class="stat-mini-val ltr" id="homeStatTasks">0</div><div class="stat-mini-lbl">مهام</div></div>
+    <div class="stat-mini"><div class="stat-mini-val ltr" id="homeStatLectures">0</div><div class="stat-mini-lbl">محاضرات</div></div>
+    <div class="stat-mini"><div class="stat-mini-val ltr" id="homeStatTasbeeh">0</div><div class="stat-mini-lbl">تسبيح</div></div>
+    <div class="stat-mini"><div class="stat-mini-val ltr" id="homeStatStreak">0</div><div class="stat-mini-lbl">Streak 🔥</div></div>
+  </div>
+
+  <!-- Profile + Birthday -->
+  <div class="profile-card" data-aos="fade-up">
+    <div class="profile-head">
+      <div class="profile-avatar" id="profileAvatar">
+        <img src="1.jpg" alt="" onerror="this.style.display='none'; this.parentElement.textContent='م';">
+      </div>
+      <div class="profile-info">
+        <div class="profile-name">محمد عبد الله</div>
+        <div class="profile-role" id="profileRole">Full Stack Dev · Level 2</div>
+      </div>
+      <button class="icon-btn" id="qrProfileBtn" title="شارك QR"><i class="fa-solid fa-qrcode"></i></button>
+    </div>
+    <div class="bday-box">
+      <div class="bday-label">🎂 عيد ميلادي 24 أكتوبر</div>
+      <div class="bday-countdown">
+        <div class="bday-unit"><div class="bday-val ltr" id="bdayDays">0</div><div class="bday-lbl">يوم</div></div>
+        <div class="bday-unit"><div class="bday-val ltr" id="bdayHours">0</div><div class="bday-lbl">ساعة</div></div>
+        <div class="bday-unit"><div class="bday-val ltr" id="bdayMins">0</div><div class="bday-lbl">دقيقة</div></div>
+        <div class="bday-unit"><div class="bday-val ltr" id="bdaySecs">0</div><div class="bday-lbl">ثانية</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mood -->
+  <div class="section-head" data-aos="fade-right"><div class="section-title">😊 إزاي حاسس النهاردة؟</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="mood-grid" id="moodGrid">
+      <button class="mood-btn" data-mood="amazing"><span class="emoji">🤩</span><span class="label">مبسوط</span></button>
+      <button class="mood-btn" data-mood="good"><span class="emoji">😊</span><span class="label">كويس</span></button>
+      <button class="mood-btn" data-mood="ok"><span class="emoji">😐</span><span class="label">عادي</span></button>
+      <button class="mood-btn" data-mood="tired"><span class="emoji">😴</span><span class="label">تعبان</span></button>
+      <button class="mood-btn" data-mood="sad"><span class="emoji">😢</span><span class="label">زعلان</span></button>
+    </div>
+    <div class="mood-history" id="moodHistory"></div>
+  </div>
+
+  <!-- Quote -->
+  <div class="section-head" data-aos="fade-right"><div class="section-title">💬 حكمة اليوم</div></div>
+  <div class="card quote-card" data-aos="fade-up">
+    <div class="quote-text" id="quoteText">«اِعمل بجد في صمت، وخلّي نجاحك هو اللي يتكلم»</div>
+    <button class="section-action" onclick="newQuote()"><i class="fa-solid fa-rotate"></i> حكمة جديدة</button>
+  </div>
+
+  <!-- Weather -->
+  <div class="section-head" data-aos="fade-right"><div class="section-title">☁️ الطقس</div></div>
+  <div class="card" data-aos="fade-up"><div class="weather-wrap" id="weatherWrap"></div></div>
+
+  <!-- Location -->
+  <div class="section-head" data-aos="fade-right"><div class="section-title">📍 موقعي</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="location-wrap">
+      <div class="loc-icon"><i class="fa-solid fa-house"></i></div>
+      <div class="loc-info">
+        <div class="loc-title">البيت — السويس</div>
+        <div class="loc-address">4 شارع هدي شعراوي، النمسا، السويس</div>
+        <button class="loc-btn" onclick="switchTab('map')"><i class="fa-solid fa-map-location-dot"></i> افتح الخريطة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Social -->
+  <div class="section-head" data-aos="fade-right"><div class="section-title">🌐 تواصل معايا</div></div>
+  <div class="social-grid" data-aos="fade-up">
+    <a class="social-tile wa" href="https://wa.me/201065228072" target="_blank"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
+    <a class="social-tile mail" href="mailto:budiabdallah922@gmail.com"><i class="fa-solid fa-envelope"></i><span>Email</span></a>
+    <a class="social-tile gh" href="https://github.com/budiabdallah20" target="_blank"><i class="fa-brands fa-github"></i><span>GitHub</span></a>
+    <a class="social-tile li" href="https://www.linkedin.com/in/budi-abdallah-ba61323a7/" target="_blank"><i class="fa-brands fa-linkedin-in"></i><span>LinkedIn</span></a>
+    <a class="social-tile ig" href="https://www.instagram.com/mohamedabdallahh_18/" target="_blank"><i class="fa-brands fa-instagram"></i><span>Instagram</span></a>
+    <a class="social-tile fb" href="https://www.facebook.com/mohamed.abdallah.45254" target="_blank"><i class="fa-brands fa-facebook-f"></i><span>Facebook</span></a>
+  </div>
+
+  <!-- Today Tasks -->
+  <div class="section-head" data-aos="fade-right">
+    <div class="section-title">✅ مهام النهاردة</div>
+    <button class="section-action" onclick="switchTab('tasks')">الكل</button>
+  </div>
+  <div id="todayTasksPreview" data-aos="fade-up"></div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: DASHBOARD (Charts) 🆕
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-dashboard">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَكُلَّ شَيْءٍ أَحْصَيْنَاهُ فِي إِمَامٍ مُّبِينٍ ﴾</div>
+    <div class="verse-ref">سورة يس · ١٢</div>
+  </div>
+
+  <div class="section-head"><div class="section-title">📊 نظرة عامة</div></div>
+  <div class="stat-mini-grid">
+    <div class="stat-mini"><div class="stat-mini-val ltr" id="dashTotalTasks">0</div><div class="stat-mini-lbl">إجمالي المهام</div></div>
+    <div class="stat-mini"><div class="stat-mini-val ltr" id="dashRate">0%</div><div class="stat-mini-lbl">نسبة الإنجاز</div></div>
+    <div class="stat-mini"><div class="stat-mini-val ltr" id="dashStreak">0</div><div class="stat-mini-lbl">Streak</div></div>
+    <div class="stat-mini"><div class="stat-mini-val ltr" id="dashLectures">0</div><div class="stat-mini-lbl">محاضرات</div></div>
+  </div>
+
+  <div class="section-head"><div class="section-title">📈 المهام آخر 7 أيام</div></div>
+  <div class="card">
+    <canvas id="tasksChart" height="200"></canvas>
+  </div>
+
+  <div class="section-head"><div class="section-title">🍩 توزيع المهام</div></div>
+  <div class="card">
+    <canvas id="doughnutChart" height="200"></canvas>
+  </div>
+
+  <div class="section-head"><div class="section-title">😊 المزاج آخر 30 يوم</div></div>
+  <div class="card">
+    <canvas id="moodChart" height="180"></canvas>
+  </div>
+
+  <div class="section-head"><div class="section-title">⏱️ البومودورو الأسبوع ده</div></div>
+  <div class="card">
+    <canvas id="pomoChart" height="180"></canvas>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: APPOINTMENTS
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-appointments">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا ﴾</div>
+    <div class="verse-ref">سورة النساء · ١٠٣</div>
+  </div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-sub="prayer"><i class="fa-solid fa-mosque"></i> الصلاة</button>
+    <button class="sub-tab" data-sub="matches"><i class="fa-solid fa-futbol"></i> الماتشات</button>
+    <button class="sub-tab" data-sub="daily"><i class="fa-solid fa-clock"></i> يومية</button>
+  </div>
+
+  <div class="sub-content active" id="sub-prayer">
+    <div class="card countdown-card" data-aos="fade-up">
+      <div class="countdown-label">🕌 الصلاة القادمة</div>
+      <div class="countdown-grid">
+        <div class="cd-unit"><div class="cd-val ltr" id="prayerH">0</div><div class="cd-lbl">ساعة</div></div>
+        <div class="cd-unit"><div class="cd-val ltr" id="prayerM">0</div><div class="cd-lbl">دقيقة</div></div>
+        <div class="cd-unit"><div class="cd-val ltr" id="prayerS">0</div><div class="cd-lbl">ثانية</div></div>
+        <div class="cd-unit"><div class="cd-val" id="prayerName">—</div><div class="cd-lbl">الصلاة</div></div>
+      </div>
+      <div class="countdown-name" id="nextPrayerName">جاري التحميل...</div>
+    </div>
+    <div class="section-head">
+      <div class="section-title">🕌 مواقيت النهاردة</div>
+      <button class="section-action" onclick="fetchPrayerTimes()"><i class="fa-solid fa-rotate"></i></button>
+    </div>
+    <div class="card"><div class="prayer-grid-list" id="prayerGrid"></div></div>
+  </div>
+
+  <div class="sub-content" id="sub-matches">
+    <div class="section-head">
+      <div class="section-title">⚽ الماتشات</div>
+      <button class="section-action" onclick="fetchMatches(state.currentLeague)"><i class="fa-solid fa-rotate"></i></button>
+    </div>
+    <div class="league-tabs" id="leagueTabs">
+      <button class="league-tab active" data-league="4328">🏴󠁧󠁢󠁥󠁮󠁧󠁿 الإنجليزي</button>
+      <button class="league-tab" data-league="4335">🇪🇸 الإسباني</button>
+      <button class="league-tab" data-league="4332">🇮🇹 الإيطالي</button>
+      <button class="league-tab" data-league="4331">🇩🇪 الألماني</button>
+      <button class="league-tab" data-league="4334">🇫🇷 الفرنسي</button>
+      <button class="league-tab" data-league="4480">⭐ أبطال أوروبا</button>
+      <button class="league-tab" data-league="4704">🇪🇬 المصري</button>
+    </div>
+    <div id="matchesList"></div>
+  </div>
+
+  <div class="sub-content" id="sub-daily">
+    <div class="section-head">
+      <div class="section-title">📅 مواعيدي اليومية</div>
+      <button class="section-action" onclick="openAptModal()"><i class="fa-solid fa-plus"></i> جديد</button>
+    </div>
+    <div id="appointmentsList"></div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: TASKS
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-tasks">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَأَنَّ سَعْيَهُ سَوْفَ يُرَىٰ ﴾</div>
+    <div class="verse-ref">سورة النجم · ٤٠</div>
+  </div>
+
+  <!-- 🆕 Feature: Kanban Toggle -->
+  <div class="view-toggle" id="taskViewToggle">
+    <button class="view-btn active" data-view="list"><i class="fa-solid fa-list"></i> قائمة</button>
+    <button class="view-btn" data-view="kanban"><i class="fa-solid fa-table-columns"></i> كانبان</button>
+  </div>
+
+  <div class="sub-tabs main-categories">
+    <button class="sub-tab active" data-sub="dailyTasks"><i class="fa-solid fa-sun"></i> يومية</button>
+    <button class="sub-tab" data-sub="universityTasks"><i class="fa-solid fa-university"></i> جامعية</button>
+    <button class="sub-tab" data-sub="workTasks"><i class="fa-solid fa-briefcase"></i> عمل ومشاريع</button>
+  </div>
+
+  <div class="sub-content active" id="sub-dailyTasks">
+    <div class="section-head">
+      <div class="section-title">☀️ مهام يومية</div>
+      <button class="section-action" onclick="openTaskModal('daily')"><i class="fa-solid fa-plus"></i> جديدة</button>
+    </div>
+    <div class="filter-pills">
+      <button class="filter-pill active" data-filter="all">الكل</button>
+      <button class="filter-pill" data-filter="today">النهاردة</button>
+      <button class="filter-pill" data-filter="done">مكتملة</button>
+    </div>
+    <div class="search-inline">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="tasksSearchInput" placeholder="ابحث في المهام...">
+    </div>
+    <div id="dailyTasksList"></div>
+    <div id="dailyTasksKanban" class="kanban-view" style="display:none"></div>
+  </div>
+
+  <div class="sub-content" id="sub-universityTasks">
+    <div class="sub-tabs inner">
+      <button class="sub-tab active" data-sub="assignments"><i class="fa-solid fa-book-bookmark"></i> واجبات</button>
+      <button class="sub-tab" data-sub="exams"><i class="fa-solid fa-file-pen"></i> امتحانات</button>
+    </div>
+    <div class="sub-content active" id="sub-assignments">
+      <div class="section-head">
+        <div class="section-title">📚 واجبات</div>
+        <button class="section-action" onclick="openTaskModal('assignment')"><i class="fa-solid fa-plus"></i> جديد</button>
+      </div>
+      <div id="assignmentsList"></div>
+    </div>
+    <div class="sub-content" id="sub-exams">
+      <div class="section-head">
+        <div class="section-title">📝 امتحانات</div>
+        <button class="section-action" onclick="openTaskModal('exam')"><i class="fa-solid fa-plus"></i> جديد</button>
+      </div>
+      <div id="examsList"></div>
+    </div>
+  </div>
+
+  <div class="sub-content" id="sub-workTasks">
+    <div class="section-head">
+      <div class="section-title">💼 عمل ومشاريع</div>
+      <button class="section-action" onclick="openTaskModal('work')"><i class="fa-solid fa-plus"></i> جديد</button>
+    </div>
+    <div id="workTasksList"></div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: LECTURES (v6 SYSTEM)
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-lectures">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَقُل رَّبِّ زِدْنِي عِلْمًا ﴾</div>
+    <div class="verse-ref">سورة طه · ١١٤</div>
+  </div>
+
+  <div class="lecture-stats-bar" data-aos="fade-up">
+    <div class="lsb-card">
+      <div class="lsb-val ltr" id="lecTotalToday">0</div>
+      <div class="lsb-lbl">حضرت النهاردة</div>
+    </div>
+    <div class="lsb-card">
+      <div class="lsb-val ltr" id="lecTotalAll">0</div>
+      <div class="lsb-lbl">إجمالي الحضور</div>
+    </div>
+  </div>
+
+  <div class="lecture-days" id="lectureDays" data-aos="fade-up">
+    <button class="day-chip" data-day="mon">الاثنين</button>
+    <button class="day-chip" data-day="tue">الثلاثاء</button>
+    <button class="day-chip" data-day="wed">الأربعاء</button>
+    <button class="day-chip" data-day="thu">الخميس</button>
+  </div>
+
+  <div id="lecturesWrap" data-aos="fade-up"></div>
+
+  <div class="card" style="border-color:var(--accent);background:linear-gradient(135deg,var(--accent-soft),transparent)" data-aos="fade-up">
+    <div style="display:flex;gap:3mm;align-items:flex-start">
+      <i class="fa-solid fa-circle-info" style="color:var(--accent);font-size:6mm"></i>
+      <div style="font-size:2.9mm;line-height:1.6;font-weight:600">
+        <strong style="color:var(--accent-light)">ملاحظة:</strong> زر "حضرت" يفتح فقط يوم المحاضرة نفسها. باقي الأيام مقفول 🔒.
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: STUDY
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-study">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَقُل رَّبِّ زِدْنِي عِلْمًا ﴾</div>
+    <div class="verse-ref">سورة طه · ١١٤</div>
+  </div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-sub="pomodoro"><i class="fa-solid fa-stopwatch"></i> بومودورو</button>
+    <button class="sub-tab" data-sub="expenses"><i class="fa-solid fa-coins"></i> مصاريف</button>
+    <button class="sub-tab" data-sub="goals"><i class="fa-solid fa-bullseye"></i> أهداف</button>
+    <button class="sub-tab" data-sub="habits"><i class="fa-solid fa-repeat"></i> عادات</button>
+    <button class="sub-tab" data-sub="books"><i class="fa-solid fa-book"></i> كتب</button>
+    <button class="sub-tab" data-sub="flashcards"><i class="fa-solid fa-layer-group"></i> بطاقات</button>
+  </div>
+
+  <div class="sub-content active" id="sub-pomodoro">
+    <div class="card pomodoro-card" data-aos="fade-up">
+      <div class="pomodoro-mode" id="pomodoroMode">🎯 وضع التركيز</div>
+      <div class="pomodoro-timer" id="pomodoroTimer">25:00</div>
+      <div class="pomodoro-progress"><div class="pomodoro-bar" id="pomodoroBar" style="width:0%"></div></div>
+      <div class="pomodoro-controls">
+        <button class="pomodoro-btn" id="pomodoroStart"><i class="fa-solid fa-play"></i></button>
+        <button class="pomodoro-btn secondary" id="pomodoroReset"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="pomodoro-btn secondary" id="pomodoroSkip"><i class="fa-solid fa-forward-step"></i></button>
+      </div>
+      <div class="pomodoro-stats">
+        <div class="pomo-stat"><div class="pomo-val ltr" id="pomoSessionsToday">0</div><div class="pomo-lbl">جلسات</div></div>
+        <div class="pomo-stat"><div class="pomo-val ltr" id="pomoMinutesToday">0</div><div class="pomo-lbl">دقيقة</div></div>
+        <div class="pomo-stat"><div class="pomo-val ltr" id="pomoStreak">0</div><div class="pomo-lbl">Streak</div></div>
+      </div>
+    </div>
+    <div class="card" data-aos="fade-up">
+      <div class="setting-row">
+        <div class="setting-label"><i class="fa-solid fa-stopwatch"></i> مدة التركيز</div>
+        <span class="ltr" style="font-weight:800;color:var(--accent-light)" id="pomoFocusLabel">25</span>
+      </div>
+      <input type="range" min="5" max="60" step="5" value="25" id="pomoFocusSlider" class="slider">
+      <div class="setting-row">
+        <div class="setting-label"><i class="fa-solid fa-mug-hot"></i> مدة الراحة</div>
+        <span class="ltr" style="font-weight:800;color:var(--accent-light)" id="pomoBreakLabel">5</span>
+      </div>
+      <input type="range" min="1" max="15" step="1" value="5" id="pomoBreakSlider" class="slider">
+    </div>
+  </div>
+
+  <div class="sub-content" id="sub-expenses">
+    <div class="section-head">
+      <div class="section-title">💰 مصاريف النهاردة</div>
+      <button class="section-action" onclick="openExpenseModal()"><i class="fa-solid fa-plus"></i> جديد</button>
+    </div>
+    <div class="card expense-summary" data-aos="fade-up">
+      <div class="expense-total">النهاردة: <span class="ltr" id="expenseTotalToday">0</span> ج.م</div>
+      <div class="expense-total">الشهر: <span class="ltr" id="expenseTotalMonth">0</span> ج.م</div>
+    </div>
+    <div id="expensesList"></div>
+  </div>
+
+  <div class="sub-content" id="sub-goals">
+    <div class="section-head">
+      <div class="section-title">🎯 أهداف السنة</div>
+      <button class="section-action" onclick="openGoalModal()"><i class="fa-solid fa-plus"></i> جديد</button>
+    </div>
+    <div id="goalsList"></div>
+  </div>
+
+  <div class="sub-content" id="sub-habits">
+    <div class="section-head">
+      <div class="section-title">🔁 عاداتي اليومية</div>
+      <button class="section-action" onclick="openHabitModal()"><i class="fa-solid fa-plus"></i> عادة</button>
+    </div>
+    <div id="habitsList"></div>
+  </div>
+
+  <div class="sub-content" id="sub-books">
+    <div class="section-head">
+      <div class="section-title">📚 كتبي</div>
+      <button class="section-action" onclick="openBookModal()"><i class="fa-solid fa-plus"></i> كتاب</button>
+    </div>
+    <div id="booksList"></div>
+  </div>
+
+  <div class="sub-content" id="sub-flashcards">
+    <div class="section-head">
+      <div class="section-title">🎴 بطاقات مراجعة</div>
+      <button class="section-action" onclick="openFlashcardModal()"><i class="fa-solid fa-plus"></i> بطاقة</button>
+    </div>
+    <div id="flashcardsList"></div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: WELLNESS 🆕 (New Section)
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-wellness">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَكُلُوا وَاشْرَبُوا وَلَا تُسْرِفُوا ﴾</div>
+    <div class="verse-ref">سورة الأعراف · ٣١</div>
+  </div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-sub="water"><i class="fa-solid fa-droplet"></i> ماء</button>
+    <button class="sub-tab" data-sub="sleep"><i class="fa-solid fa-moon"></i> نوم</button>
+    <button class="sub-tab" data-sub="exercise"><i class="fa-solid fa-dumbbell"></i> رياضة</button>
+    <button class="sub-tab" data-sub="breathing"><i class="fa-solid fa-wind"></i> تنفس</button>
+    <button class="sub-tab" data-sub="medicine"><i class="fa-solid fa-pills"></i> دواء</button>
+    <button class="sub-tab" data-sub="weight"><i class="fa-solid fa-weight-scale"></i> وزن</button>
+  </div>
+
+  <div class="sub-content active" id="sub-water">
+    <div class="card" data-aos="fade-up">
+      <div class="water-glasses" id="waterGlasses"></div>
+      <div style="text-align:center;font-size:3mm;font-weight:700;color:var(--muted);margin:3mm 0">
+        شربت <span id="waterCount" style="color:#38bdf8;font-family:'Poppins';font-weight:900">0</span> من 8 أكواب
+      </div>
+      <button class="btn btn-primary" onclick="addWaterGlass()"><i class="fa-solid fa-plus"></i> كوب ماء</button>
+    </div>
+  </div>
+
+  <div class="sub-content" id="sub-sleep">
+    <div class="card" data-aos="fade-up">
+      <div class="setting-row">
+        <div class="setting-label"><i class="fa-solid fa-moon"></i> ساعات نوم أمس</div>
+        <input type="number" min="0" max="24" step="0.5" class="form-input ltr" id="sleepHours" placeholder="8" style="max-width:22mm">
+      </div>
+      <div class="setting-row">
+        <div class="setting-label"><i class="fa-solid fa-bed"></i> وقت النوم</div>
+        <input type="time" class="form-input ltr" id="sleepTime" style="max-width:30mm">
+      </div>
+      <div class="setting-row">
+        <div class="setting-label"><i class="fa-solid fa-sun"></i> وقت الصحيان</div>
+        <input type="time" class="form-input ltr" id="wakeTime" style="max-width:30mm">
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-content" id="sub-exercise">
+    <div class="card" data-aos="fade-up">
+      <div class="setting-row">
+        <div class="setting-label"><i class="fa-solid fa-dumbbell"></i> دقايق رياضة</div>
+        <input type="number" min="0" max="300" step="5" class="form-input ltr" id="exerciseMinutes" placeholder="30" style="max-width:22mm">
+      </div>
+      <div class="setting-row">
+        <div class="setting-label"><i class="fa-solid fa-person-walking"></i> خطوات</div>
+        <input type="number" min="0" step="100" class="form-input ltr" id="stepsCount" placeholder="5000" style="max-width:30mm">
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-content" id="sub-breathing">
+    <div class="breathing-box" id="breathingBox" data-aos="zoom-in">
+      <div class="breathing-circle" id="breathingCircle">
+        <div class="breathing-text" id="breathingText">اضغط ابدأ</div>
+      </div>
+      <button class="btn btn-primary" id="breathStartBtn" onclick="startBreathing()">
+        <i class="fa-solid fa-play"></i> ابدأ التمرين
+      </button>
+      <div class="breathing-stats">
+        <div>جلسات اليوم: <span class="ltr" id="breathSessions">0</span></div>
+        <div>دقيقة اليوم: <span class="ltr" id="breathMinutes">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-content" id="sub-medicine">
+    <div class="section-head">
+      <div class="section-title">💊 أدويتي</div>
+      <button class="section-action" onclick="openMedicineModal()"><i class="fa-solid fa-plus"></i> دواء</button>
+    </div>
+    <div id="medicinesList"></div>
+  </div>
+
+  <div class="sub-content" id="sub-weight">
+    <div class="section-head">
+      <div class="section-title">⚖️ متابعة الوزن</div>
+      <button class="section-action" onclick="openWeightModal()"><i class="fa-solid fa-plus"></i> سجل</button>
+    </div>
+    <div class="card"><canvas id="weightChart" height="180"></canvas></div>
+    <div id="weightList"></div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: MEMORIES
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-memories">
+  <div class="memories-hero" data-aos="zoom-in">
+    <div class="memories-hero-emoji">💝</div>
+    <div class="memories-hero-title">كنز الذكريات</div>
+    <div class="memories-hero-sub">Treasure of Memories</div>
+  </div>
+  <div class="memories-stats" data-aos="fade-up">
+    <div class="mem-stat"><div class="mem-stat-val" id="memStatPhotos">6</div><div class="mem-stat-lbl">📷 صور</div></div>
+    <div class="mem-stat"><div class="mem-stat-val" id="memStatLoved">0</div><div class="mem-stat-lbl">💕 أحباب</div></div>
+    <div class="mem-stat"><div class="mem-stat-val" id="memStatMemories">0</div><div class="mem-stat-lbl">✨ ذكريات</div></div>
+  </div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-sub="me"><i class="fa-solid fa-camera"></i> ألبومي</button>
+    <button class="sub-tab" data-sub="loved"><i class="fa-solid fa-heart"></i> أحبابي</button>
+    <button class="sub-tab" data-sub="moments"><i class="fa-solid fa-star"></i> لحظات</button>
+    <button class="sub-tab" data-sub="journal"><i class="fa-solid fa-book"></i> مذكرات</button>
+    <button class="sub-tab" data-sub="vision"><i class="fa-solid fa-image"></i> لوحة الأهداف</button>
+  </div>
+
+  <div class="sub-content active" id="sub-me">
+    <div class="section-head"><div class="section-title">📸 Carousel</div></div>
+    <div class="photo-carousel">
+      <div class="pc-track" id="pcTrack">
+        <div class="pc-slide"><img src="1.jpg" onerror="this.parentElement.innerHTML='<div style=\'color:var(--muted);font-size:12mm;\'>📷</div>'"></div>
+        <div class="pc-slide"><img src="2.jpg" onerror="this.parentElement.innerHTML='<div style=\'color:var(--muted);font-size:12mm;\'>📷</div>'"></div>
+        <div class="pc-slide"><img src="3.jpg" onerror="this.parentElement.innerHTML='<div style=\'color:var(--muted);font-size:12mm;\'>📷</div>'"></div>
+        <div class="pc-slide"><img src="4.jpg" onerror="this.parentElement.innerHTML='<div style=\'color:var(--muted);font-size:12mm;\'>📷</div>'"></div>
+        <div class="pc-slide"><img src="5.jpg" onerror="this.parentElement.innerHTML='<div style=\'color:var(--muted);font-size:12mm;\'>📷</div>'"></div>
+        <div class="pc-slide"><img src="6.jpg" onerror="this.parentElement.innerHTML='<div style=\'color:var(--muted);font-size:12mm;\'>📷</div>'"></div>
+      </div>
+      <div class="pc-dots" id="pcDots"></div>
+    </div>
+  </div>
+
+  <div class="sub-content" id="sub-loved">
+    <div class="section-head">
+      <div class="section-title">💕 أحبابي</div>
+      <button class="section-action" onclick="openLovedModal()"><i class="fa-solid fa-plus"></i> إضافة</button>
+    </div>
+    <div class="loved-grid" id="lovedList"></div>
+  </div>
+
+  <div class="sub-content" id="sub-moments">
+    <div class="section-head">
+      <div class="section-title">⭐ لحظات مميزة</div>
+      <button class="section-action" onclick="openMomentModal()"><i class="fa-solid fa-plus"></i> ذكرى</button>
+    </div>
+    <div id="momentsList"></div>
+  </div>
+
+  <div class="sub-content" id="sub-journal">
+    <div class="section-head">
+      <div class="section-title">📔 مذكراتي اليومية</div>
+      <button class="section-action" onclick="openJournalModal()"><i class="fa-solid fa-plus"></i> يومية</button>
+    </div>
+    <div id="journalList"></div>
+  </div>
+
+  <div class="sub-content" id="sub-vision">
+    <div class="section-head">
+      <div class="section-title">🌈 لوحة الأهداف (Vision Board)</div>
+      <button class="section-action" onclick="openVisionModal()"><i class="fa-solid fa-plus"></i> صورة</button>
+    </div>
+    <div class="vision-grid" id="visionGrid"></div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: MAP 🆕 (Leaflet)
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-map">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَهُوَ الَّذِي جَعَلَ لَكُمُ الْأَرْضَ ذَلُولًا ﴾</div>
+    <div class="verse-ref">سورة الملك · ١٥</div>
+  </div>
+
+  <div class="section-head">
+    <div class="section-title">🗺️ خريطة أماكني</div>
+    <button class="section-action" onclick="openPlaceModal()"><i class="fa-solid fa-plus"></i> مكان</button>
+  </div>
+
+  <div class="map-filters" id="mapFilters">
+    <button class="map-filter active" data-cat="all">الكل</button>
+    <button class="map-filter" data-cat="home">🏠 بيت</button>
+    <button class="map-filter" data-cat="uni">🎓 جامعة</button>
+    <button class="map-filter" data-cat="fav">⭐ مفضل</button>
+    <button class="map-filter" data-cat="loved">💕 أحباب</button>
+  </div>
+
+  <div class="map-wrap" data-aos="fade-up">
+    <div id="mainMap" style="width:100%;height:60vh;border-radius:4mm"></div>
+  </div>
+
+  <div class="section-head"><div class="section-title">📍 أماكني المحفوظة</div></div>
+  <div id="placesList"></div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: FOFA
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-fofa">
+  <div class="fofa-hero" data-aos="zoom-in">
+    <div class="fofa-avatar" id="fofaAvatar">
+      <div class="fofa-pulse"></div>
+      <i class="fa-solid fa-brain"></i>
+    </div>
+    <div class="fofa-hero-name">فوفا</div>
+    <div class="fofa-hero-sub">مساعدتك الذكية 🤖</div>
+    <div class="fofa-status-badge">
+      <span class="fofa-status-dot"></span>
+      <span id="fofaStatus">جاهزة للدردشة</span>
+    </div>
+  </div>
+
+  <div class="fofa-quick-actions">
+    <button class="fofa-quick-btn" onclick="fofaQuick('مواقيت الصلاة النهاردة')"><i class="fa-solid fa-mosque"></i> الصلاة</button>
+    <button class="fofa-quick-btn" onclick="fofaQuick('عندي كام مهمة النهاردة؟')"><i class="fa-solid fa-list-check"></i> مهام النهاردة</button>
+    <button class="fofa-quick-btn" onclick="fofaQuick('عندي محاضرات امتى النهاردة؟')"><i class="fa-solid fa-book"></i> محاضراتي</button>
+    <button class="fofa-quick-btn" onclick="fofaQuick('حضرت كام محاضرة النهاردة؟')"><i class="fa-solid fa-graduation-cap"></i> الحضور</button>
+    <button class="fofa-quick-btn" onclick="fofaQuick('قولي حكمة')"><i class="fa-solid fa-quote-right"></i> حكمة</button>
+    <button class="fofa-quick-btn" onclick="fofaQuick('صليت النهاردة كام صلاة؟')"><i class="fa-solid fa-check-circle"></i> صليت؟</button>
+  </div>
+
+  <div class="fofa-voice-zone">
+    <button class="voice-btn" id="voiceBtn"><i class="fa-solid fa-microphone"></i></button>
+    <div class="voice-hint" id="voiceHint">دوس واتكلم مع فوفا</div>
+  </div>
+
+  <div class="chat-log" id="chatLog"></div>
+
+  <div class="fofa-input-row">
+    <input type="text" class="form-input" id="fofaInput" placeholder="أو اكتب لفوفا...">
+    <button class="section-action" onclick="sendFofaText()"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+
+  <div class="section-head">
+    <div class="section-title">⚙️ إدارة</div>
+    <button class="section-action" onclick="clearChatLog()">مسح</button>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: ACHIEVEMENTS
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-achievements">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَفِي ذَٰلِكَ فَلْيَتَنَافَسِ الْمُتَنَافِسُونَ ﴾</div>
+    <div class="verse-ref">سورة المطففين · ٢٦</div>
+  </div>
+
+  <div class="xp-overview" data-aos="zoom-in">
+    <div class="xp-level-big" id="xpLevelBig">Lv.1</div>
+    <div class="xp-name" id="xpName">مبتدئ</div>
+    <div class="xp-progress-big">
+      <div class="xp-fill-big" id="xpFillBig" style="width:0%"></div>
+    </div>
+    <div class="xp-stats">
+      <div><i class="fa-solid fa-star" style="color:var(--gold)"></i> <span class="ltr" id="xpTotal">0</span> XP</div>
+      <div><i class="fa-solid fa-coins" style="color:var(--gold)"></i> <span class="ltr" id="coinsBig">0</span> عملة</div>
+    </div>
+  </div>
+
+  <div class="section-head"><div class="section-title">🏆 شاراتك</div></div>
+  <div class="badges-grid" id="badgesGrid"></div>
+
+  <div class="section-head"><div class="section-title">📊 إحصائياتك</div></div>
+  <div class="stats-grid">
+    <div class="stat-card" style="--accent-color:var(--green)"><div class="stat-value ltr" id="statDone">0</div><div class="stat-label">مهام مكتملة</div></div>
+    <div class="stat-card" style="--accent-color:var(--red)"><div class="stat-value ltr" id="statOverdue">0</div><div class="stat-label">متأخرة</div></div>
+    <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-value ltr" id="statStreak">0</div><div class="stat-label">Streak 🔥</div></div>
+    <div class="stat-card" style="--accent-color:var(--blue)"><div class="stat-value ltr" id="statRate">0%</div><div class="stat-label">نسبة الإنجاز</div></div>
+    <div class="stat-card" style="--accent-color:var(--purple)"><div class="stat-value ltr" id="statNotes">0</div><div class="stat-label">ملاحظات</div></div>
+    <div class="stat-card" style="--accent-color:var(--gold)"><div class="stat-value ltr" id="statTotal">0</div><div class="stat-label">إجمالي المهام</div></div>
+    <div class="stat-card" style="--accent-color:var(--pink)"><div class="stat-value ltr" id="statTasbeeh">0</div><div class="stat-label">تسبيح</div></div>
+    <div class="stat-card" style="--accent-color:var(--green)"><div class="stat-value ltr" id="statPrayed">0</div><div class="stat-label">صلوات النهاردة</div></div>
+    <div class="stat-card" style="--accent-color:var(--cyan)"><div class="stat-value ltr" id="statLectures">0</div><div class="stat-label">محاضرات حضرتها</div></div>
+    <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-value ltr" id="statPomo">0</div><div class="stat-label">جلسات بومودورو</div></div>
+  </div>
+
+  <!-- 🆕 Leaderboard -->
+  <div class="section-head"><div class="section-title">🏅 لوحة الشرف الأسبوعية</div></div>
+  <div class="card" id="leaderboardCard" data-aos="fade-up"></div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: NOTES
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-notes">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَكُلَّ شَيْءٍ أَحْصَيْنَاهُ فِي إِمَامٍ مُّبِينٍ ﴾</div>
+    <div class="verse-ref">سورة يس · ١٢</div>
+  </div>
+  <div class="section-head">
+    <div class="section-title">📝 دفتر ملاحظاتي</div>
+    <button class="section-action" onclick="openNoteModal()"><i class="fa-solid fa-plus"></i> جديدة</button>
+  </div>
+  <div class="form-group">
+    <input type="text" class="form-input" id="notesSearch" placeholder="🔍 ابحث في الملاحظات...">
+  </div>
+  <div class="note-filters">
+    <button class="note-filter active" data-nf="all">الكل</button>
+    <button class="note-filter" data-nf="pinned">📌 مثبتة</button>
+    <button class="note-filter" data-nf="recent">🕐 حديثة</button>
+  </div>
+  <div id="notesList"></div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: TOOLS 🆕
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-tools">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَعَلَّمْنَاهُ مِمَّا لَدَيْنَا عِلْمًا ﴾</div>
+    <div class="verse-ref">سورة الكهف · ٦٥</div>
+  </div>
+
+  <div class="tools-grid" data-aos="fade-up">
+    <button class="tool-card" onclick="openQRGenerator()">
+      <i class="fa-solid fa-qrcode"></i>
+      <div class="tool-name">مولّد QR</div>
+      <div class="tool-desc">شارك أي حاجة بضغطة</div>
+    </button>
+    <button class="tool-card" onclick="openPasswordGenerator()">
+      <i class="fa-solid fa-key"></i>
+      <div class="tool-name">مولّد باسورد</div>
+      <div class="tool-desc">باسورد قوي آمن</div>
+    </button>
+    <button class="tool-card" onclick="openUnitConverter()">
+      <i class="fa-solid fa-ruler"></i>
+      <div class="tool-name">محوّل وحدات</div>
+      <div class="tool-desc">طول · وزن · حرارة</div>
+    </button>
+    <button class="tool-card" onclick="openRandomPicker()">
+      <i class="fa-solid fa-dice"></i>
+      <div class="tool-name">اختيار عشوائي</div>
+      <div class="tool-desc">قرعة سريعة</div>
+    </button>
+    <button class="tool-card" onclick="openCalculator()">
+      <i class="fa-solid fa-calculator"></i>
+      <div class="tool-name">آلة حاسبة</div>
+      <div class="tool-desc">حسابات سريعة</div>
+    </button>
+    <button class="tool-card" onclick="openStopwatch()">
+      <i class="fa-solid fa-stopwatch"></i>
+      <div class="tool-name">ساعة إيقاف</div>
+      <div class="tool-desc">Timer & Stopwatch</div>
+    </button>
+    <button class="tool-card" onclick="openTextTools()">
+      <i class="fa-solid fa-font"></i>
+      <div class="tool-name">أدوات نص</div>
+      <div class="tool-desc">عدّ كلمات · حروف</div>
+    </button>
+    <button class="tool-card" onclick="openColorPicker()">
+      <i class="fa-solid fa-palette"></i>
+      <div class="tool-name">مولّد ألوان</div>
+      <div class="tool-desc">HEX · RGB · HSL</div>
+    </button>
+  </div>
+
+  <!-- 🆕 Wifi/Time/Date tools -->
+  <div class="section-head"><div class="section-title">⏰ أدوات سريعة</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="quick-info-row">
+      <div class="qi-item">
+        <div class="qi-val ltr" id="qiDate">--</div>
+        <div class="qi-lbl">التاريخ</div>
+      </div>
+      <div class="qi-item">
+        <div class="qi-val ltr" id="qiTime">--:--</div>
+        <div class="qi-lbl">الوقت</div>
+      </div>
+      <div class="qi-item">
+        <div class="qi-val ltr" id="qiWeek">--</div>
+        <div class="qi-lbl">الأسبوع</div>
+      </div>
+    </div>
+    <div class="quick-info-row">
+      <div class="qi-item">
+        <div class="qi-val ltr" id="qiDayOfYear">0</div>
+        <div class="qi-lbl">يوم من السنة</div>
+      </div>
+      <div class="qi-item">
+        <div class="qi-val ltr" id="qiWeekLeft">0</div>
+        <div class="qi-lbl">أسبوع للسنة الجديدة</div>
+      </div>
+      <div class="qi-item">
+        <div class="qi-val ltr" id="qiDaysLeft">0</div>
+        <div class="qi-lbl">يوم للسنة الجديدة</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TAB: SETTINGS
+     ═══════════════════════════════════════════ -->
+<main class="tab-content" id="tab-settings">
+  <div class="verse-card" data-aos="fade-up">
+    <div class="verse-text">﴿ وَمَا تَوْفِيقِي إِلَّا بِاللَّهِ ۚ عَلَيْهِ تَوَكَّلْتُ ﴾</div>
+    <div class="verse-ref">سورة هود · ٨٨</div>
+  </div>
+
+  <div class="section-head"><div class="section-title">👤 الملف الشخصي</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="avatar-upload-wrap">
+      <label for="profilePhotoInput" class="avatar-upload-big">
+        <img id="profilePhotoPreview" src="1.jpg" alt="" onerror="this.style.display='none'">
+        <div class="avatar-edit-overlay"><i class="fa-solid fa-camera"></i></div>
+      </label>
+      <input type="file" id="profilePhotoInput" accept="image/*" style="display:none">
+    </div>
+    <div class="form-group"><label class="form-label">الاسم</label><input type="text" class="form-input" id="settingName" value="محمد عبد الله"></div>
+    <div class="form-group"><label class="form-label">الوصف</label><input type="text" class="form-input" id="settingBio" value="Full Stack Dev"></div>
+  </div>
+
+  <div class="section-head"><div class="section-title">🎨 الثيمات</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="theme-grid">
+      <div class="theme-swatch sw-dark active" data-theme="dark"></div>
+      <div class="theme-swatch sw-light" data-theme="light"></div>
+      <div class="theme-swatch sw-ocean" data-theme="ocean"></div>
+      <div class="theme-swatch sw-purple" data-theme="purple"></div>
+      <div class="theme-swatch sw-rose" data-theme="rose"></div>
+      <div class="theme-swatch sw-gold" data-theme="gold"></div>
+    </div>
+    <div class="setting-row" style="margin-top:3mm">
+      <div class="setting-label"><i class="fa-solid fa-wand-magic-sparkles"></i> تأثيرات بصرية</div>
+      <button class="setting-btn" id="visualEffectsToggle" onclick="toggleVisualEffects()">مفعّل</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-circle-half-stroke"></i> خلفية متحركة</div>
+      <button class="setting-btn" id="bgToggle" onclick="toggleBackground()">مفعّلة</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-arrows-up-down"></i> تأثيرات Scroll</div>
+      <button class="setting-btn" id="aosToggle" onclick="toggleAOS()">مفعّلة</button>
+    </div>
+  </div>
+
+  <div class="section-head"><div class="section-title">🔔 الإشعارات</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-bell"></i> تفعيل الإشعارات</div>
+      <button class="setting-btn" onclick="enableNotifications()">تفعيل</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-mosque"></i> تنبيهات الصلاة</div>
+      <button class="setting-btn" id="prayerAlertBtn" onclick="togglePrayerAlerts()">تفعيل</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-graduation-cap"></i> تنبيهات المحاضرات</div>
+      <button class="setting-btn" id="lectureAlertBtn" onclick="toggleLectureAlerts()">تفعيل</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-volume-high"></i> صوت فوفا</div>
+      <button class="setting-btn" id="voiceToggle" onclick="toggleVoice()">مفعّل</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-paper-plane"></i> تجربة إشعار</div>
+      <button class="setting-btn" onclick="sendInAppNotification('🔔 تجربة','دي تجربة من مسار v10')">تجربة</button>
+    </div>
+  </div>
+
+  <div class="section-head"><div class="section-title">🔒 الأمان</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-lock"></i> قفل التطبيق بـ PIN</div>
+      <button class="setting-btn" id="pinLockBtn" onclick="togglePinLock()">تفعيل</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-fingerprint"></i> فتح بالبصمة</div>
+      <button class="setting-btn" id="bioBtn" onclick="enableBiometric()">تفعيل</button>
+    </div>
+  </div>
+
+  <div class="section-head"><div class="section-title">⚙️ إدارة البيانات</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-download"></i> تصدير البيانات</div>
+      <button class="setting-btn" onclick="exportData()">تصدير</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-upload"></i> استيراد البيانات</div>
+      <label class="setting-btn" for="importFile" style="cursor:pointer">استيراد</label>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-file-csv"></i> تصدير CSV</div>
+      <button class="setting-btn" onclick="exportCSV()">CSV</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-broom"></i> حذف المهام المكتملة</div>
+      <button class="setting-btn" onclick="clearCompletedTasks()">حذف</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-trash"></i> مسح كل البيانات</div>
+      <button class="setting-btn danger" onclick="clearAllData()">مسح</button>
+    </div>
+  </div>
+
+  <div class="section-head"><div class="section-title">📱 التطبيق</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-download"></i> تثبيت التطبيق</div>
+      <button class="setting-btn" id="installBtn" onclick="installPWA()">تثبيت</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-wifi"></i> حالة الاتصال</div>
+      <span class="ltr" id="connectionStatus" style="font-size:2.8mm;color:var(--green);font-weight:800">Online</span>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label"><i class="fa-solid fa-mobile-screen"></i> الدقة / PPI</div>
+      <span class="ltr" id="screenInfo" style="font-size:2.6mm;color:var(--muted);font-weight:700">—</span>
+    </div>
+  </div>
+
+  <div class="section-head"><div class="section-title">⌨️ اختصارات</div></div>
+  <div class="card" data-aos="fade-up">
+    <div class="setting-row"><div class="setting-label"><i class="fa-solid fa-magnifying-glass"></i> بحث</div><span class="ltr" style="font-size:2.8mm;color:var(--muted);font-weight:700">Ctrl+K</span></div>
+    <div class="setting-row"><div class="setting-label"><i class="fa-solid fa-plus"></i> مهمة جديدة</div><span class="ltr" style="font-size:2.8mm;color:var(--muted);font-weight:700">Ctrl+N</span></div>
+    <div class="setting-row"><div class="setting-label"><i class="fa-solid fa-stopwatch"></i> بومودورو</div><span class="ltr" style="font-size:2.8mm;color:var(--muted);font-weight:700">Ctrl+P</span></div>
+    <div class="setting-row"><div class="setting-label"><i class="fa-solid fa-xmark"></i> إغلاق</div><span class="ltr" style="font-size:2.8mm;color:var(--muted);font-weight:700">ESC</span></div>
+  </div>
+
+  <div class="section-head"><div class="section-title">ℹ️ عن التطبيق</div></div>
+  <div class="card" style="text-align:center" data-aos="fade-up">
+    <div style="font-family:'Amiri',serif;font-size:8mm;font-weight:700;color:var(--accent-light);margin-bottom:2mm">مَسَار</div>
+    <div style="font-size:3mm;color:var(--muted);font-weight:600">الإصدار 10.0.0</div>
+    <div style="font-size:2.8mm;color:var(--muted-2);font-weight:600;margin-top:1mm">صُمّم بواسطة محمد عبد الله</div>
+    <button class="section-action" style="margin-top:3mm" onclick="showChangelog()"><i class="fa-solid fa-list"></i> اللي جديد في v10</button>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════
+     FABs
+     ═══════════════════════════════════════════ -->
+<button class="fab" id="quickAdd" title="مهمة جديدة"><i class="fa-solid fa-plus"></i></button>
+<button class="fab-secondary" id="fabQR" title="QR سريع"><i class="fa-solid fa-qrcode"></i></button>
+<button class="fab-search" id="fabSearch" title="بحث"><i class="fa-solid fa-magnifying-glass"></i></button>
+
+<!-- ═══════════════════════════════════════════
+     SEARCH OVERLAY
+     ═══════════════════════════════════════════ -->
+<div class="search-box" id="searchBox">
+  <div class="search-panel">
+    <div class="search-input-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="searchInput" placeholder="ابحث في كل حاجة...">
+      <button class="close-search" onclick="closeSearch()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="search-hints">
+      <span class="search-hint" onclick="quickSearch('مهام')">مهام</span>
+      <span class="search-hint" onclick="quickSearch('محاضرات')">محاضرات</span>
+      <span class="search-hint" onclick="quickSearch('ملاحظات')">ملاحظات</span>
+      <span class="search-hint" onclick="quickSearch('أحباب')">أحباب</span>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODALS - CORE
+     ═══════════════════════════════════════════ -->
+
+<!-- Task Modal -->
+<div class="modal" id="taskModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span id="taskModalTitle">مهمة جديدة</span><button class="modal-close" onclick="closeModal('taskModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <input type="hidden" id="taskEditId">
+    <div class="form-group"><label class="form-label">اسم المهمة *</label><input type="text" class="form-input" id="taskTitle" placeholder="مثلاً: تسليم Assignment"></div>
+    <div class="form-group"><label class="form-label">الوصف</label><textarea class="form-textarea" id="taskDesc" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">التاريخ</label><input type="date" class="form-input ltr" id="taskDate"></div>
+    <div class="form-group">
+      <label class="form-label">⏰ الديدلاين (اختياري)</label>
+      <div class="form-row">
+        <input type="date" class="form-input ltr" id="taskDeadlineDate">
+        <input type="time" class="form-input ltr" id="taskDeadlineTime">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">النوع</label>
+      <div class="type-pills" id="typePills">
+        <div class="type-pill active" data-t="daily">☀️ يومية</div>
+        <div class="type-pill" data-t="assignment">📚 واجب</div>
+        <div class="type-pill" data-t="exam">📝 امتحان</div>
+        <div class="type-pill" data-t="work">💼 عمل</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">الأولوية</label>
+      <div class="priority-pills" id="priorityPills">
+        <div class="priority-pill" data-p="high">🔴 عالية</div>
+        <div class="priority-pill active" data-p="med">🟡 متوسطة</div>
+        <div class="priority-pill" data-p="low">🔵 منخفضة</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveTask()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Note Modal -->
+<div class="modal" id="noteModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span id="noteModalTitle">ملاحظة جديدة</span><button class="modal-close" onclick="closeModal('noteModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <input type="hidden" id="noteEditId">
+    <div class="form-group"><label class="form-label">العنوان *</label><input type="text" class="form-input" id="noteTitle"></div>
+    <div class="form-group"><label class="form-label">المحتوى</label><textarea class="form-textarea" id="noteBody" rows="6"></textarea></div>
+    <button class="btn btn-primary" onclick="saveNote()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Appt Modal -->
+<div class="modal" id="aptModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>موعد جديد</span><button class="modal-close" onclick="closeModal('aptModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">العنوان *</label><input type="text" class="form-input" id="aptTitle"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">التاريخ</label><input type="date" class="form-input ltr" id="aptDate"></div>
+      <div class="form-group"><label class="form-label">الوقت</label><input type="time" class="form-input ltr" id="aptTime"></div>
+    </div>
+    <div class="form-group"><label class="form-label">المكان</label><input type="text" class="form-input" id="aptLocation"></div>
+    <button class="btn btn-primary" onclick="saveApt()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Expense Modal -->
+<div class="modal" id="expenseModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>مصروف جديد</span><button class="modal-close" onclick="closeModal('expenseModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">العنوان *</label><input type="text" class="form-input" id="expenseTitle"></div>
+    <div class="form-group"><label class="form-label">المبلغ (ج.م) *</label><input type="number" class="form-input ltr" id="expenseAmount" min="0" step="0.5"></div>
+    <div class="form-group">
+      <label class="form-label">الفئة</label>
+      <select class="form-select" id="expenseCategory">
+        <option value="food">🍔 أكل</option>
+        <option value="transport">🚗 مواصلات</option>
+        <option value="study">📚 دراسة</option>
+        <option value="entertainment">🎬 ترفيه</option>
+        <option value="other">📦 أخرى</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveExpense()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Goal Modal -->
+<div class="modal" id="goalModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>هدف جديد</span><button class="modal-close" onclick="closeModal('goalModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">الهدف *</label><input type="text" class="form-input" id="goalTitle"></div>
+    <div class="form-group"><label class="form-label">القيمة المستهدفة</label><input type="number" class="form-input ltr" id="goalTarget" min="1" placeholder="100"></div>
+    <div class="form-group">
+      <label class="form-label">الفئة</label>
+      <select class="form-select" id="goalCategory">
+        <option value="study">📚 دراسة</option>
+        <option value="fitness">💪 رياضة</option>
+        <option value="reading">📖 قراءة</option>
+        <option value="personal">⭐ شخصي</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveGoal()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Habit Modal -->
+<div class="modal" id="habitModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>عادة جديدة</span><button class="modal-close" onclick="closeModal('habitModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">اسم العادة *</label><input type="text" class="form-input" id="habitTitle" placeholder="مثلاً: قراءة 20 دقيقة"></div>
+    <div class="form-group">
+      <label class="form-label">الأيقونة</label>
+      <select class="form-select" id="habitIcon">
+        <option value="📚">📚 قراءة</option>
+        <option value="💪">💪 رياضة</option>
+        <option value="💧">💧 ماء</option>
+        <option value="🧘">🧘 تأمل</option>
+        <option value="📿">📿 ذكر</option>
+        <option value="🌙">🌙 نوم مبكر</option>
+        <option value="🍎">🍎 أكل صحي</option>
+        <option value="✍️">✍️ كتابة</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveHabit()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Book Modal -->
+<div class="modal" id="bookModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>كتاب جديد</span><button class="modal-close" onclick="closeModal('bookModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">عنوان الكتاب *</label><input type="text" class="form-input" id="bookTitle"></div>
+    <div class="form-group"><label class="form-label">المؤلف</label><input type="text" class="form-input" id="bookAuthor"></div>
+    <div class="form-group"><label class="form-label">عدد الصفحات الكلي</label><input type="number" class="form-input ltr" id="bookPages" min="1" placeholder="200"></div>
+    <button class="btn btn-primary" onclick="saveBook()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Flashcard Modal -->
+<div class="modal" id="flashcardModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>بطاقة جديدة</span><button class="modal-close" onclick="closeModal('flashcardModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">السؤال / المفهوم *</label><textarea class="form-textarea" id="fcQuestion" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">الإجابة</label><textarea class="form-textarea" id="fcAnswer" rows="3"></textarea></div>
+    <button class="btn btn-primary" onclick="saveFlashcard()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Loved Modal -->
+<div class="modal" id="lovedModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>💕 إضافة حبيب</span><button class="modal-close" onclick="closeModal('lovedModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="loved-avatar-upload">
+      <label for="lovedPhoto" class="avatar-upload-label">
+        <img id="lovedPhotoPreview" src="" alt="" style="display:none">
+        <div class="avatar-upload-placeholder" id="lovedPhotoPlaceholder">
+          <i class="fa-solid fa-camera"></i><span>ارفع صورة</span>
+        </div>
+      </label>
+      <input type="file" id="lovedPhoto" accept="image/*" style="display:none">
+    </div>
+    <div class="form-group"><label class="form-label">الاسم *</label><input type="text" class="form-input" id="lovedName"></div>
+    <div class="form-group"><label class="form-label">نبذة عنه</label><textarea class="form-textarea" id="lovedDesc" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">رقم الموبايل</label><input type="tel" class="form-input ltr" id="lovedPhone" placeholder="+20..."></div>
+    <div class="form-group">
+      <label class="form-label">العلاقة</label>
+      <select class="form-select" id="lovedRelation">
+        <option value="family">👨‍👩‍👧 عائلة</option>
+        <option value="friend" selected>👥 صديق</option>
+        <option value="colleague">💼 زميل</option>
+        <option value="other">⭐ أخرى</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveLoved()"><i class="fa-solid fa-heart"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Moment Modal -->
+<div class="modal" id="momentModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>⭐ ذكرى جديدة</span><button class="modal-close" onclick="closeModal('momentModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="loved-avatar-upload">
+      <label for="momentPhoto" class="avatar-upload-label">
+        <img id="momentPhotoPreview" src="" alt="" style="display:none">
+        <div class="avatar-upload-placeholder" id="momentPhotoPlaceholder">
+          <i class="fa-solid fa-camera"></i><span>ارفع صورة</span>
+        </div>
+      </label>
+      <input type="file" id="momentPhoto" accept="image/*" style="display:none">
+    </div>
+    <div class="form-group"><label class="form-label">العنوان *</label><input type="text" class="form-input" id="momentTitle"></div>
+    <div class="form-group"><label class="form-label">التفاصيل</label><textarea class="form-textarea" id="momentDesc" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">التاريخ</label><input type="date" class="form-input ltr" id="momentDate"></div>
+    <button class="btn btn-primary" onclick="saveMoment()"><i class="fa-solid fa-star"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Journal Modal -->
+<div class="modal" id="journalModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>📔 يومية جديدة</span><button class="modal-close" onclick="closeModal('journalModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">التاريخ</label><input type="date" class="form-input ltr" id="journalDate"></div>
+    <div class="form-group"><label class="form-label">عنوان اليوم *</label><input type="text" class="form-input" id="journalTitle"></div>
+    <div class="form-group"><label class="form-label">اكتب كل حاجة في دماغك ✍️</label><textarea class="form-textarea" id="journalBody" rows="8"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">مزاج اليوم</label>
+      <select class="form-select" id="journalMood">
+        <option value="🤩">🤩 ممتاز</option>
+        <option value="😊">😊 كويس</option>
+        <option value="😐">😐 عادي</option>
+        <option value="😔">😔 تعبان</option>
+        <option value="😢">😢 وحش</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveJournal()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Vision Modal -->
+<div class="modal" id="visionModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>🌈 إضافة للوحة</span><button class="modal-close" onclick="closeModal('visionModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">العنوان *</label><input type="text" class="form-input" id="visionTitle" placeholder="حاجة عايز أحققها"></div>
+    <div class="form-group"><label class="form-label">صورة</label>
+      <label for="visionPhoto" class="section-action" style="cursor:pointer"><i class="fa-solid fa-camera"></i> ارفع صورة</label>
+      <input type="file" id="visionPhoto" accept="image/*" style="display:none">
+    </div>
+    <button class="btn btn-primary" onclick="saveVision()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Medicine Modal -->
+<div class="modal" id="medicineModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>💊 دواء جديد</span><button class="modal-close" onclick="closeModal('medicineModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">اسم الدواء *</label><input type="text" class="form-input" id="medicineName"></div>
+    <div class="form-group"><label class="form-label">الجرعة</label><input type="text" class="form-input" id="medicineDose" placeholder="قرص واحد"></div>
+    <div class="form-group"><label class="form-label">عدد المرات يوميًا</label><input type="number" class="form-input ltr" id="medicineTimes" min="1" max="6" value="1"></div>
+    <button class="btn btn-primary" onclick="saveMedicine()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Weight Modal -->
+<div class="modal" id="weightModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>⚖️ سجل وزن</span><button class="modal-close" onclick="closeModal('weightModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">الوزن (كجم) *</label><input type="number" class="form-input ltr" id="weightValue" step="0.1" min="20" max="300"></div>
+    <div class="form-group"><label class="form-label">التاريخ</label><input type="date" class="form-input ltr" id="weightDate"></div>
+    <button class="btn btn-primary" onclick="saveWeight()"><i class="fa-solid fa-check"></i> حفظ</button>
+  </div>
+</div>
+
+<!-- Place Modal -->
+<div class="modal" id="placeModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>📍 مكان جديد</span><button class="modal-close" onclick="closeModal('placeModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="form-group"><label class="form-label">الاسم *</label><input type="text" class="form-input" id="placeName"></div>
+    <div class="form-group">
+      <label class="form-label">الفئة</label>
+      <select class="form-select" id="placeCategory">
+        <option value="home">🏠 بيت</option>
+        <option value="uni">🎓 جامعة</option>
+        <option value="fav">⭐ مفضل</option>
+        <option value="loved">💕 أحباب</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Latitude</label><input type="number" class="form-input ltr" id="placeLat" step="0.0001"></div>
+      <div class="form-group"><label class="form-label">Longitude</label><input type="number" class="form-input ltr" id="placeLng" step="0.0001"></div>
+    </div>
+    <button class="btn btn-primary" onclick="savePlace()"><i class="fa-solid fa-check"></i> حفظ</button>
+    <button class="btn" style="background:var(--card-2);color:var(--text);margin-top:2mm" onclick="useCurrentLocation()">
+      <i class="fa-solid fa-location-crosshairs"></i> استخدم موقعي الحالي
+    </button>
+  </div>
+</div>
+
+<!-- Approve Modal -->
+<div class="modal" id="approveModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>✅ موافقة المهمة</span><button class="modal-close" onclick="closeModal('approveModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <input type="hidden" id="approveTaskId">
+    <div style="text-align:center;padding:3mm 0">
+      <div style="font-size:14mm;margin-bottom:2mm">🎉</div>
+      <div style="font-size:4mm;font-weight:800;margin-bottom:1.5mm" id="approveTaskTitle">—</div>
+      <div style="font-size:3mm;color:var(--muted);margin-bottom:4mm">هل خلصت المهمة دي فعلًا؟</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2mm">
+      <button class="btn btn-primary" onclick="approveTask()" style="background:linear-gradient(135deg,var(--green),#15803d)"><i class="fa-solid fa-check"></i> نعم</button>
+      <button class="btn" onclick="closeModal('approveModal')" style="background:var(--card-2);color:var(--text)"><i class="fa-solid fa-xmark"></i> لسه</button>
+    </div>
+  </div>
+</div>
+
+<!-- Flashcard Viewer Modal -->
+<div class="modal" id="flashcardViewModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>🎴 مراجعة</span><button class="modal-close" onclick="closeModal('flashcardViewModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div id="fcViewerContent"></div>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div class="modal" id="qrModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>🔳 QR Code</span><button class="modal-close" onclick="closeModal('qrModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div style="text-align:center;padding:4mm 0">
+      <div id="qrCanvas" style="background:#fff;padding:5mm;border-radius:4mm;display:inline-block"></div>
+      <div style="font-size:2.8mm;color:var(--muted);font-weight:600;margin-top:3mm;word-break:break-all" id="qrLabel">—</div>
+      <button class="btn btn-primary" style="margin-top:4mm" onclick="downloadQR()"><i class="fa-solid fa-download"></i> تحميل</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN Lock Modal -->
+<div class="modal" id="pinModal">
+  <div class="modal-body">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span>🔒 قفل التطبيق</span><button class="modal-close" onclick="closeModal('pinModal')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="pin-display" id="pinDisplay"></div>
+    <div class="pin-pad" id="pinPad"></div>
+  </div>
+</div>
+
+<!-- Breathing Fullscreen Modal -->
+<div class="modal breath-modal" id="breathFullModal">
+  <div class="breath-full-wrap">
+    <button class="modal-close" onclick="closeModal('breathFullModal')" style="position:absolute;top:6mm;right:6mm"><i class="fa-solid fa-xmark"></i></button>
+    <div class="breath-full-circle" id="breathFullCircle">
+      <span id="breathFullText">اضغط ابدأ</span>
+    </div>
+    <button class="btn btn-primary" id="breathFullStart" onclick="startFullBreathing()"><i class="fa-solid fa-play"></i> ابدأ</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i><span id="toastText">تم</span></div>
+
+<!-- ═══════════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════════ -->
+<script src="config.js"></script>
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
